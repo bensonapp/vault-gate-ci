@@ -1,47 +1,47 @@
-[English](README.md) | [Русский](README.ru.md)
+[English](README.en.md) | [Русский](README.md)
 
 ---
 
-# Vault Gate CI: DevSecOps Pipeline
+# Vault Gate CI: DevSecOps Пайплайн
 
-A GitHub Actions pipeline for automating security controls within the CI/CD lifecycle (SDLC). A vulnerable REST API microservice (VAmPI) serves as the test target.
+Пайплайн на базе GitHub Actions для автоматизации проверок безопасности в процессе CI/CD (SDLC). В качестве тестового стенда используется микросервис (REST API) с заведомо уязвимой архитектурой (VAmPI).
 
-## Pipeline Architecture
+## Архитектура конвейера
 
-The pipeline is triggered on every push to the `main` branch and executes three security layers:
+Пайплайн запускается при каждом push-событии в ветку `main` и включает три этапа проверок:
 
-1. **SAST (Static Application Security Testing)**
-   * **Tool:** Semgrep
-   * **Task:** Detect hardcoded secrets, logic flaws, and insecure Python (FastAPI) code prior to the build phase.
+1. **SAST (Статический анализ)**
+   * **Инструмент:** Semgrep
+   * **Задача:** Поиск хардкод-секретов, логических ошибок и небезопасного кода на Python (FastAPI) до сборки приложения.
 
-2. **SCA (Software Composition Analysis)**
-   * **Tool:** Trivy
-   * **Task:** Identify CVEs in third-party dependencies. A Security Gate is enforced: the build is blocked if `HIGH` or `CRITICAL` vulnerabilities are detected. Reports are exported as GitHub artifacts.
+2. **SCA (Анализ зависимостей)**
+   * **Инструмент:** Trivy
+   * **Задача:** Поиск CVE в сторонних библиотеках. Настроен Security Gate: при обнаружении уязвимостей уровня `HIGH` и `CRITICAL` деплой блокируется. Отчеты экспортируются в артефакты GitHub.
 
-3. **DAST (Dynamic Application Security Testing)**
-   * **Tool:** Docker & OWASP ZAP (Baseline Scan)
-   * **Task:** Build and run the API in a container. The scanner attacks the running application (`http://localhost:5000`) to detect runtime misconfigurations (e.g., missing security headers). Findings are automatically converted into developer Issues.
+3. **DAST (Динамический анализ)**
+   * **Инструмент:** Docker и OWASP ZAP (Baseline Scan)
+   * **Задача:** Сборка и запуск API в контейнере. Сканер атакует работающее приложение (`http://localhost:5000`) для выявления проблем среды выполнения (отсутствие Security-заголовков, мисконфигурации). Результаты автоматически конвертируются в задачи для разработчиков (Issues).
 
-## Execution Results & Triage
+## Результаты работы и триаж
 
-### 1. Checks Orchestration
-End-to-end process: static code analysis, dependency scanning, container build, and dynamic testing of the live service.
+### 1. Оркестрация проверок
+Сквозной процесс: статический анализ кода, проверка зависимостей, сборка контейнера и динамическое тестирование работающего сервиса.
 
 ![Successful CI/CD Run](images/pipeline_execution.png)
 
-### 2. Vulnerability Blocking (Security Gate)
-Pipeline interruption (exit-code 1) upon detecting critical vulnerabilities in project dependencies. Vulnerable code is prevented from passing the build stage.
+### 2. Блокировка уязвимостей (Security Gate)
+Прерывание пайплайна (exit-code 1) при обнаружении критических уязвимостей в зависимостях проекта. Плохой код не проходит этап сборки.
 
 ![Trivy Gate](images/trivy_scan_error.png)
 
-### 3. Bug Tracker Integration
-OWASP ZAP automatically creates GitHub Issues for the development team based on identified runtime vulnerabilities.
+### 3. Интеграция с баг-трекером
+Сканер OWASP ZAP автоматически заводит задачи (Issues) в трекере для разработчиков на основе найденных уязвимостей среды выполнения.
 
 ![ZAP Issues](images/zap_issue_report.png)
 
-### Key Vulnerabilities & Mitigation
-* **Dependencies (SCA):** Identified Python packages with High CVEs. *Mitigation:* Pinning patched library versions in `requirements.txt`.
-* **Runtime (DAST):** Missing Anti-CSRF tokens and CSP headers. *Mitigation:* Enforcing strict HTTP security headers and CORS policies via FastAPI middleware.
+### Ключевые уязвимости и решения
+* **Зависимости (SCA):** Найдены Python-пакеты с High CVEs. *Решение:* Фиксация (pinning) пропатченных версий в `requirements.txt`.
+* **Среда выполнения (DAST):** Отсутствие Anti-CSRF токенов и заголовков CSP. *Решение:* Настройка HTTP-заголовков безопасности и CORS-политик через middleware FastAPI.
 
-## Configuration
-The pipeline infrastructure (IaC) is defined in `.github/workflows/sec-pipeline.yml`.
+## Конфигурация
+Инфраструктура пайплайна (IaC) описана в файле `.github/workflows/sec-pipeline.yml`.
