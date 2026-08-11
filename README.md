@@ -4,44 +4,44 @@
 
 # Vault Gate CI: DevSecOps Pipeline
 
-An automated, multi-stage security CI/CD pipeline built with GitHub Actions. This project demonstrates the integration of security controls into the software development lifecycle (SDLC) using a vulnerable REST API (VAmPI) as the test target.
+A GitHub Actions pipeline for automating security controls within the CI/CD lifecycle (SDLC). A vulnerable REST API microservice (VAmPI) serves as the test target.
 
-## Architecture & Tools
+## Pipeline Architecture
 
-The pipeline is triggered automatically on every push to the `main` branch and implements three layers of automated security testing:
+The pipeline is triggered on every push to the `main` branch and executes three security layers:
 
 1. **SAST (Static Application Security Testing)**
    * **Tool:** Semgrep
-   * **Purpose:** Scans the Python/FastAPI source code for logic flaws, hardcoded secrets, and insecure configurations before the application is built.
+   * **Task:** Detect hardcoded secrets, logic flaws, and insecure Python (FastAPI) code prior to the build phase.
 
 2. **SCA (Software Composition Analysis)**
    * **Tool:** Trivy
-   * **Purpose:** Analyzes project dependencies to detect known vulnerabilities (CVEs) in third-party libraries. Reports are exported and saved as CI/CD artifacts.
+   * **Task:** Identify CVEs in third-party dependencies. A Security Gate is enforced: the build is blocked if `HIGH` or `CRITICAL` vulnerabilities are detected. Reports are exported as GitHub artifacts.
 
 3. **DAST (Dynamic Application Security Testing)**
    * **Tool:** Docker & OWASP ZAP (Baseline Scan)
-   * **Purpose:** The API is built and deployed in an ephemeral Docker container. OWASP ZAP performs passive dynamic scanning against the running target (`http://localhost:5000`) to detect misconfigurations and runtime vulnerabilities (e.g., missing security headers, CSRF). ZAP automatically creates GitHub Issues for identified risks.
+   * **Task:** Build and run the API in a container. The scanner attacks the running application (`http://localhost:5000`) to detect runtime misconfigurations (e.g., missing security headers). Findings are automatically converted into developer Issues.
 
-## Security Findings & Triage
+## Execution Results & Triage
 
-### 1. Pipeline Architecture & Orchestration
-The pipeline successfully initializes the runner, performs static analysis, checks dependencies, builds the Docker image, and executes dynamic attacks against the running container.
+### 1. Checks Orchestration
+End-to-end process: static code analysis, dependency scanning, container build, and dynamic testing of the live service.
 
 ![Successful CI/CD Run](images/pipeline_execution.png)
 
-### 2. Security Gate Execution
-The pipeline enforces a strict build block (exit-code: 1) upon detecting `HIGH` or `CRITICAL` vulnerabilities in project dependencies. Reports are preserved as CI/CD artifacts.
+### 2. Vulnerability Blocking (Security Gate)
+Pipeline interruption (exit-code 1) upon detecting critical vulnerabilities in project dependencies. Vulnerable code is prevented from passing the build stage.
 
 ![Trivy Gate](images/trivy_scan_error.png)
 
-### 3. Automated Bug Tracker Integration
-Upon completion of the DAST scan, OWASP ZAP automatically converts identified vulnerabilities into GitHub Issues for the development team.
+### 3. Bug Tracker Integration
+OWASP ZAP automatically creates GitHub Issues for the development team based on identified runtime vulnerabilities.
 
 ![ZAP Issues](images/zap_issue_report.png)
 
-### Key Vulnerabilities Identified
-* **Dependency Risks (SCA):** Identified several outdated Python packages with High/Critical CVEs. *Mitigation:* Pin dependencies in `requirements.txt` to patched versions.
-* **Runtime Risks (DAST):** OWASP ZAP reported missing Anti-CSRF tokens and missing Content Security Policy (CSP) headers. *Mitigation:* Implement strict CORS policies and security headers via FastAPI middleware.
+### Key Vulnerabilities & Mitigation
+* **Dependencies (SCA):** Identified Python packages with High CVEs. *Mitigation:* Pinning patched library versions in `requirements.txt`.
+* **Runtime (DAST):** Missing Anti-CSRF tokens and CSP headers. *Mitigation:* Enforcing strict HTTP security headers and CORS policies via FastAPI middleware.
 
-## How to Run
-Check the `.github/workflows/sec-pipeline.yml` file for the complete GitHub Actions configuration. To trigger the pipeline, push a commit to the `main` branch.
+## Configuration
+The pipeline infrastructure (IaC) is defined in `.github/workflows/sec-pipeline.yml`.
