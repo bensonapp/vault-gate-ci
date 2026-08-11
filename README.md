@@ -27,17 +27,17 @@ The pipeline is triggered automatically on every push to the `main` branch and i
 ### 1. Pipeline Architecture & Orchestration
 The pipeline successfully initializes the runner, performs static analysis, checks dependencies, builds the Docker image, and executes dynamic attacks against the running container.
 
-![Successful CI/CD Run](images/success-pipeline.png)
+![Successful CI/CD Run](images/pipeline_execution.png)
 
 ### 2. Security Gate Execution
 The pipeline enforces a strict build block (exit-code: 1) upon detecting `HIGH` or `CRITICAL` vulnerabilities in project dependencies. Reports are preserved as CI/CD artifacts.
 
-![Trivy Gate](images/trivy-gate.jpg)
+![Trivy Gate](images/trivy_scan_error.png)
 
 ### 3. Automated Bug Tracker Integration
 Upon completion of the DAST scan, OWASP ZAP automatically converts identified vulnerabilities into GitHub Issues for the development team.
 
-![ZAP Issues](images/zap-issues.png)
+![ZAP Issues](images/zap_issue_report.png)
 
 ### Key Vulnerabilities Identified
 * **Dependency Risks (SCA):** Identified several outdated Python packages with High/Critical CVEs. *Mitigation:* Pin dependencies in `requirements.txt` to patched versions.
